@@ -1,14 +1,16 @@
 import sys
 
-import numpy as np
 from PyQt6 import QtCore, QtGui, QtWidgets
 from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget
 from ui.main_window import Ui_MainWindow
 from ui.result import Ui_SubWindow
 
 import math
+import numpy as np
+import json
 import pandas as pd
-from pandas.io.formats.style import Styler
+from pathlib import Path
+
 import fisher_tables as ft
 
 
@@ -18,15 +20,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.setupUi(self)
         self.cols.valueChanged.connect(self.updateTable)
         self.rows.valueChanged.connect(self.updateTable)
-        self.updateTableSize()
 
         # Sub Window
         self.sub_window = QtWidgets.QMainWindow()
         self.sub_ui = Ui_SubWindow()
         self.sub_ui.setupUi(self.sub_window)
-
         # Button Event
         self.pushButton.clicked.connect(self.showResults)
+
+        self.load_configs()
 
     def updateTable(self):
         _translate = QtCore.QCoreApplication.translate
@@ -47,8 +49,38 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def updateTableSize(self):
         col = self.cols.value()
         row = self.rows.value()
-        self.table.setFixedSize(50 * col + 50, 27 + row * 21)
-        self.resize(100 + col * 50, 200 + row * 21)
+        self.table.setFixedSize(45 + col * 50, 25 + row * 23)
+        self.resize(90 + col * 50, 180 + row * 23)
+
+    def save_configs(self):
+        cfg_path = Path.home() / Path('.variance-analysis-cfg')
+        cfg = {'rows': self.rows.value(),
+               'cols': self.cols.value(),
+               'cells': self.getMatrix().round(2).tolist()
+               }
+        with open(cfg_path, 'w') as f:
+            json_string = json.dumps(cfg, default=lambda o: o.__dict__, sort_keys=True, indent=2)
+            f.write(json_string)
+
+    def load_configs(self):
+        cfg_path = Path.home() / Path('.variance-analysis-cfg')
+        if cfg_path.exists():
+            with open(cfg_path) as json_file:
+                cfg = json.load(json_file)
+            try:
+                self.rows.setValue(cfg['rows'])
+            except KeyError as e:
+                print("Missing attribute in .cfg file:", e)
+            try:
+                self.cols.setValue(cfg['cols'])
+            except KeyError as e:
+                print("Missing attribute in .cfg file:", e)
+            try:
+                values = cfg['cells']
+                self.writeCells(values)
+            except KeyError as e:
+                print("Missing attribute in .cfg file:", e)
+        self.updateTableSize()
 
     def getMatrix(self):
         rows = self.table.rowCount()
@@ -61,7 +93,18 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     matrix[row, col] = float(item.text().replace(',', '.'))
         return matrix
 
-    def calculate(self, X):
+    def writeCells(self, data: list):
+        rows = self.table.rowCount()
+        cols = self.table.columnCount()
+        for row in range(0, rows):
+            for col in range(0, cols):
+                text = str(data[row][col])
+                item = QtWidgets.QTableWidgetItem()
+                item.setText(text)
+                self.table.setItem(row, col, item)
+
+    def calculate(self):
+        X = self.getMatrix()
         l = np.shape(X)[0]  # Чмсло вариантов
         n = np.shape(X)[1]  # Число наблюдений
         V = np.sum(X, axis=1)  # Суммы
@@ -122,9 +165,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         return text
 
     def showResults(self):
-        text = self.calculate(self.getMatrix())
+        text = self.calculate()
         self.sub_window.show()
         self.sub_ui.textEdit.setText(text)
+        self.save_configs()
 
 
 def main():
