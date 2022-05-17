@@ -25,6 +25,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.sub_window = QtWidgets.QMainWindow()
         self.sub_ui = Ui_SubWindow()
         self.sub_ui.setupUi(self.sub_window)
+        self.sub_ui.exportButton.clicked.connect(self.exportToExcel)
         # Button Event
         self.pushButton.clicked.connect(self.showResults)
 
@@ -82,10 +83,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 print("Missing attribute in .cfg file:", e)
         self.updateTableSize()
 
-    def getMatrix(self):
+    def getMatrix(self) -> np.ndarray:
         rows = self.table.rowCount()
         cols = self.table.columnCount()
-        matrix = np.empty([rows, cols])
+        matrix = np.zeros([rows, cols])
         for col in range(0, self.table.columnCount()):
             for row in range(0, self.table.rowCount()):
                 item = self.table.item(row, col)
@@ -130,45 +131,125 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         HCP05 = t05 * sd
         HCP05_percent = (HCP05 * 100) / avg
 
-        CY = round(CY, 2)
-        CV = round(CV, 2)
-        s2 = round(s2, 2)
-        s2v = round(s2v, 2)
-        sx = round(sx, 2)
-        sd = round(sd, 2)
-        sd_percent = round(sd_percent, 2)
-        Ff = round(Ff, 2)
-        F05 = round(F05, 2)
-        v = round(v, 2)
-        HCP05 = round(HCP05, 2)
-        HCP05_percent = round(HCP05_percent, 2)
+        output = Output()
+        output.N = N
+        output.l = l
+        output.CY = CY
+        output.CV = CV
+        output.CZ = CZ
+        output.s2 = s2
+        output.s2v = s2v
+        output.sx = sx
+        output.sd = sd
+        output.sd_percent = sd_percent
+        output.Ff = Ff
+        output.F05 = F05
+        output.v = v
+        output.HCP05 = HCP05
+        output.HCP05_percent = HCP05_percent
 
-        output_table = [['Загальна', CY, N - 1, '--', '--', '--'],
-                        ['Варіантів', CV, l - 1, s2v, Ff, F05],
-                        ['Залишок (помилки)', CZ, N - l, s2, '--', '--']]
+        return output
+
+    def exportToExcel(self):
+        output = self.calculate()
+        output.roundVals(2)
+        output.toExcel()
+
+    def showResults(self):
+        output = self.calculate()
+        output.roundVals(2)
+        self.sub_window.show()
+        self.sub_ui.textEdit.setText(output.toMarkdown())
+        self.save_configs()
+
+
+class Output:
+    def __init__(self):
+        self.N: int | None = None
+        self.l: int | None = None
+        self.CY: float | None = None
+        self.CV: float | None = None
+        self.CZ: float | None = None
+        self.s2: float | None = None
+        self.s2v: float | None = None
+        self.sx: float | None = None
+        self.sd: float | None = None
+        self.sd_percent: float | None = None
+        self.Ff: float | None = None
+        self.F05: float | None = None
+        self.v: float | None = None
+        self.HCP05: float | None = None
+        self.HCP05_percent: float | None = None
+
+    def roundVals(self, n):
+        self.CY = round(self.CY, n)
+        self.CV = round(self.CV, n)
+        self.CZ = round(self.CZ, n)
+        self.s2 = round(self.s2, n)
+        self.s2v = round(self.s2v, n)
+        self.sx = round(self.sx, n)
+        self.sd = round(self.sd, n)
+        self.sd_percent = round(self.sd_percent, n)
+        self.Ff = round(self.Ff, n)
+        self.F05 = round(self.F05, n)
+        self.v = round(self.v, n)
+        self.HCP05 = round(self.HCP05, n)
+        self.HCP05_percent = round(self.HCP05_percent, n)
+
+    def toMarkdown(self) -> str:
+        output_table = [['Загальна', self.CY, self.N - 1, '--', '--', '--'],
+                        ['Варіантів', self.CV, self.l - 1, self.s2v, self.Ff, self.F05],
+                        ['Залишок (помилки)', self.CZ, self.N - self.l, self.s2, '--', '--']]
         columns = ['Дисперсія', 'Сума\nквадратів', 'Ступені\nсвободи', 'Середній\nквадрат', 'Fф', 'F05']
         table = pd.DataFrame(output_table, columns=columns)
 
-        # text = table.to_html(index=False, decimal=',', classes='table table-stripped')
-        text = table.to_markdown(index=False, tablefmt='fancy_grid', floatfmt=".2f", stralign="center", numalign='center')
+        text = table.to_markdown(index=False,
+                                 tablefmt='fancy_grid',
+                                 floatfmt=".2f",
+                                 stralign="center",
+                                 numalign='center')
 
-        text += '\n\n\n'
-        text += f'Критерій суттєвості = {Ff}\n'
-        text += f'Критерій F на 5%-му рівні значимості = {F05}\n'
-        text += f'Помилка досліду = {sx}\n'
-        text += f'Помилка різниці середніх = {sd}\n'
-        text += f'Відносна помилка різниці середніх = {sd_percent}%\n'
-        text += f'Коефіцієнт варіації = {v}%\n'
-        text += f'НІР абсолютне = {HCP05}\n'
-        text += f'НІР відносне = {HCP05_percent}%'
+        text += '\n\n'
+        text += f'Критерій суттєвості = {self.Ff}\n'
+        text += f'Критерій F на 5%-му рівні значимості = {self.F05}\n'
+        text += f'Помилка досліду = {self.sx}\n'
+        text += f'Помилка різниці середніх = {self.sd}\n'
+        text += f'Відносна помилка різниці середніх = {self.sd_percent}%\n'
+        text += f'Коефіцієнт варіації = {self.v}%\n'
+        text += f'НІР абсолютне = {self.HCP05}\n'
+        text += f'НІР відносне = {self.HCP05_percent}%'
 
         return text
 
-    def showResults(self):
-        text = self.calculate()
-        self.sub_window.show()
-        self.sub_ui.textEdit.setText(text)
-        self.save_configs()
+    def toExcel(self):
+        head = ['Дисперсія', 'Сума\nквадратів', 'Ступені\nсвободи', 'Середній\nквадрат', 'Fф', 'F05']
+        body = [['Загальна', self.CY, self.N - 1, '--', '--', '--'],
+                ['Варіантів', self.CV, self.l - 1, self.s2v, self.Ff, self.F05],
+                ['Залишок (помилки)', self.CZ, self.N - self.l, self.s2, '--', '--']]
+        table = pd.DataFrame(body, columns=head)
+        
+        writer = pd.ExcelWriter("result.xlsx", engine='xlsxwriter')
+        table.to_excel(writer, sheet_name='Sheet1', index=False)
+        
+        workbook = writer.book
+        worksheet = writer.sheets['Sheet1']
+
+        format = workbook.add_format({'align': 'center', 'valign': 'vcenter', 'font_size': 10})
+        format_text = workbook.add_format({'align': 'left', 'valign': 'vcenter', 'font_size': 10})
+        worksheet.set_column(0, 0, 18, format)
+        worksheet.set_column(1, 1, 12, format)
+        worksheet.set_column(2, 6, None, format)
+
+        worksheet.write('A6', f'Критерій суттєвості = {self.Ff}', format_text)
+        worksheet.write('A7', f'Критерій F на 5%-му рівні значимості = {self.F05}', format_text)
+        worksheet.write('A8', f'Помилка досліду = {self.sx}', format_text)
+        worksheet.write('A9', f'Помилка різниці середніх = {self.sd}', format_text)
+        worksheet.write('A10', f'Відносна помилка різниці середніх = {self.sd_percent}%', format_text)
+        worksheet.write('A11', f'Коефіцієнт варіації = {self.v}%', format_text)
+        worksheet.write('A12', f'НІР абсолютне = {self.HCP05}', format_text)
+        worksheet.write('A13', f'НІР відносне = {self.HCP05_percent}%', format_text)
+
+        writer.save()
 
 
 def main():

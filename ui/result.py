@@ -12,15 +12,18 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 class Ui_SubWindow(object):
     def setupUi(self, SubWindow):
         SubWindow.setObjectName("SubWindow")
-        SubWindow.resize(652, 364)
+        SubWindow.resize(700, 380)
         self.textEdit = QtWidgets.QTextEdit(SubWindow)
-        self.textEdit.setGeometry(QtCore.QRect(20, 20, 611, 321))
+        self.textEdit.setGeometry(QtCore.QRect(20, 20, 660, 310))
         font = QtGui.QFont()
         font.setFamily("Courier New")
         self.textEdit.setFont(font)
         self.textEdit.setAutoFillBackground(True)
         self.textEdit.setReadOnly(True)
         self.textEdit.setObjectName("textEdit")
+        self.exportButton = QtWidgets.QPushButton(SubWindow)
+        self.exportButton.setGeometry(QtCore.QRect(22, 340, 171, 32))
+        self.exportButton.setObjectName("exportButton")
 
         self.retranslateUi(SubWindow)
         QtCore.QMetaObject.connectSlotsByName(SubWindow)
@@ -28,3 +31,4 @@ class Ui_SubWindow(object):
     def retranslateUi(self, SubWindow):
         _translate = QtCore.QCoreApplication.translate
         SubWindow.setWindowTitle(_translate("SubWindow", "Form"))
+        self.exportButton.setText(_translate("SubWindow", "Експортувати в Excel"))
