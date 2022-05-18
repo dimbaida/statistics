@@ -3,7 +3,7 @@ import sys
 from PyQt6 import QtCore, QtWidgets
 from PyQt6.QtWidgets import QApplication, QMainWindow
 from ui.main_window import Ui_MainWindow
-from ui.result import Ui_SubWindow
+from ui.result_window import Ui_SubWindow
 
 import math
 import numpy as np
@@ -104,42 +104,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 item.setText(text)
                 self.table.setItem(row, col, item)
 
-    def calculate(self):
-        # X = self.getMatrix()
-        # l = np.shape(X)[0]  # Чмсло вариантов
-        # n = np.shape(X)[1]  # Число наблюдений
-        # V = np.sum(X, axis=1)  # Суммы
-        # N = np.size(X)  # Общее число наблюдений
-        # avg = np.average(X)
-        #
-        # C = pow(np.sum(X), 2) / N
-        # CY = np.sum(np.square(X)) - C
-        # CV = np.sum(np.square(V)) / n - C
-        # CZ = CY - CV
-        # s2v = CV / (l - 1)  # средний квадрат вариантов
-        # s2 = CZ / (N - l)  # средний кадрат ошибки
-        # v = 100 * math.sqrt(s2) / avg  # коэффициент вариации, %
-        #
-        # sx = math.sqrt(s2 / n)  # ошибка оптыта
-        # sd = math.sqrt(2 * s2 / n)  # ошибка разности средних
-        # sd_percent = 100 * sd / avg  # относительная ошибка разницы средних
-        #
-        # Ff = s2v / s2
-        # F05 = ft.f05_distr(n, N - l)
-        # t05 = ft.t_crit(0.95, N - l)
-        #
-        # HCP05 = t05 * sd
-        # HCP05_percent = (HCP05 * 100) / avg
-        disp = DispOutput(self.getMatrix())
-        return disp
-
     def exportToExcel(self):
-        disp = self.calculate()
+        disp = DispOutput(self.getMatrix())
         disp.roundVals(2)
         disp.toExcel()
 
     def showResults(self):
-        disp = self.calculate()
+        disp = DispOutput(self.getMatrix())
         disp.roundVals(2)
         self.sub_window.show()
         self.sub_ui.textEdit.setText(disp.toMarkdown())
@@ -303,15 +274,9 @@ class DispOutput:
 
 def main():
     app = QApplication(sys.argv)
-    main = MainWindow()
-    main.show()
+    main_window = MainWindow()
+    main_window.show()
     sys.exit(app.exec())
 
 
 main()
-
-
-
-
-
-
