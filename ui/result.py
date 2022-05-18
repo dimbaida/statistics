@@ -12,9 +12,9 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 class Ui_SubWindow(object):
     def setupUi(self, SubWindow):
         SubWindow.setObjectName("SubWindow")
-        SubWindow.resize(700, 380)
+        SubWindow.resize(850, 600)
         self.textEdit = QtWidgets.QTextEdit(SubWindow)
-        self.textEdit.setGeometry(QtCore.QRect(20, 20, 660, 310))
+        self.textEdit.setGeometry(QtCore.QRect(20, 20, 811, 531))
         font = QtGui.QFont()
         font.setFamily("Courier New")
         self.textEdit.setFont(font)
@@ -22,7 +22,7 @@ class Ui_SubWindow(object):
         self.textEdit.setReadOnly(True)
         self.textEdit.setObjectName("textEdit")
         self.exportButton = QtWidgets.QPushButton(SubWindow)
-        self.exportButton.setGeometry(QtCore.QRect(22, 340, 171, 32))
+        self.exportButton.setGeometry(QtCore.QRect(22, 560, 171, 32))
         self.exportButton.setObjectName("exportButton")
 
         self.retranslateUi(SubWindow)
