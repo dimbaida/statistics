@@ -52,6 +52,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         row = self.rows.value()
         self.table.setFixedSize(45 + col * 50, 25 + row * 23)
         self.resize(90 + col * 50, 180 + row * 23)
+        # TODO: update min size
 
     def save_configs(self):
         cfg_path = Path.home() / Path('.variance-analysis-cfg')
@@ -104,7 +105,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 item.setText(text)
                 self.table.setItem(row, col, item)
 
-    def calculate(self):
+    def calculate(self):  # TODO: add preliminary tables
         X = self.getMatrix()
         l = np.shape(X)[0]  # Чмсло вариантов
         n = np.shape(X)[1]  # Число наблюдений
@@ -152,12 +153,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def exportToExcel(self):
         output = self.calculate()
-        output.roundVals(2)
+        output.roundValues(2)
         output.toExcel()
 
     def showResults(self):
         output = self.calculate()
-        output.roundVals(2)
+        output.roundValues(2)
         self.sub_window.show()
         self.sub_ui.textEdit.setText(output.toMarkdown())
         self.save_configs()
@@ -181,7 +182,7 @@ class Output:
         self.HCP05: float | None = None
         self.HCP05_percent: float | None = None
 
-    def roundVals(self, n):
+    def roundValues(self, n):
         self.CY = round(self.CY, n)
         self.CV = round(self.CV, n)
         self.CZ = round(self.CZ, n)
@@ -234,11 +235,11 @@ class Output:
         workbook = writer.book
         worksheet = writer.sheets['Sheet1']
 
-        format = workbook.add_format({'align': 'center', 'valign': 'vcenter', 'font_size': 10})
+        format_cells = workbook.add_format({'align': 'center', 'valign': 'vcenter', 'font_size': 10})
         format_text = workbook.add_format({'align': 'left', 'valign': 'vcenter', 'font_size': 10})
-        worksheet.set_column(0, 0, 18, format)
-        worksheet.set_column(1, 1, 12, format)
-        worksheet.set_column(2, 6, None, format)
+        worksheet.set_column(0, 0, 18, format_cells)
+        worksheet.set_column(1, 1, 12, format_cells)
+        worksheet.set_column(2, 6, None, format_cells)
 
         worksheet.write('A6', f'Критерій суттєвості = {self.Ff}', format_text)
         worksheet.write('A7', f'Критерій F на 5%-му рівні значимості = {self.F05}', format_text)
