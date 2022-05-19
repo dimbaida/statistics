@@ -50,8 +50,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def updateTableSize(self):
         col = self.cols.value()
         row = self.rows.value()
-        self.table.setFixedSize(45 + col * 50, 25 + row * 23)
-        self.resize(90 + col * 50, 180 + row * 23)
+        self.table.setFixedSize(45 + col * 50, 25 + row * 21)
+        self.resize(90 + col * 50, 180 + row * 21)
 
     def saveConfigs(self):
         cfg_path = Path.home() / Path('.variance-analysis-cfg')
@@ -163,7 +163,6 @@ class DispOutput:
         self.HCP05_percent = round(self.HCP05_percent, n)
 
     def toMarkdown(self) -> str:
-        text = 'Вхідні дані\n'
         columns = ['Варіанти']
         for i in range(0, self.n):
             columns.append(str(i + 1))
@@ -179,11 +178,11 @@ class DispOutput:
             row.append(np.average(self.X, axis=1)[i])
             body.append(row)
         table = pd.DataFrame(body, columns=columns)
-        text += table.to_markdown(index=False,
-                                  tablefmt='fancy_grid',
-                                  floatfmt=".2f",
-                                  stralign="center",
-                                  numalign='center')
+        text = table.to_markdown(index=False,
+                                 tablefmt='fancy_grid',
+                                 floatfmt=".2f",
+                                 stralign="center",
+                                 numalign='center')
         text += f'\n\nЗагальна кількіть спостережень: {self.N}'
         text += f'\nЗагальна сума: {round(self.V.sum(), 2)}'
         text += f'\nСереднє по досліду: {self.avg}'
