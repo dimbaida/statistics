@@ -1,7 +1,7 @@
 import sys
 
-from PyQt6 import QtCore, QtWidgets
-from PyQt6.QtWidgets import QApplication, QMainWindow
+from PyQt5 import QtCore, QtWidgets
+from PyQt5.QtWidgets import QApplication, QMainWindow
 from ui.main_window import Ui_MainWindow
 from ui.result_window import Ui_SubWindow
 
@@ -29,7 +29,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # Button Event
         self.pushButton.clicked.connect(self.showResults)
 
-        self.load_configs()
+        self.loadConfigs()
 
     def updateTable(self):
         _translate = QtCore.QCoreApplication.translate
@@ -53,7 +53,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.table.setFixedSize(45 + col * 50, 25 + row * 23)
         self.resize(90 + col * 50, 180 + row * 23)
 
-    def save_configs(self):
+    def saveConfigs(self):
         cfg_path = Path.home() / Path('.variance-analysis-cfg')
         cfg = {'rows': self.rows.value(),
                'cols': self.cols.value(),
@@ -63,7 +63,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             json_string = json.dumps(cfg, default=lambda o: o.__dict__, sort_keys=True, indent=2)
             f.write(json_string)
 
-    def load_configs(self):
+    def loadConfigs(self):
         cfg_path = Path.home() / Path('.variance-analysis-cfg')
         if cfg_path.exists():
             with open(cfg_path) as json_file:
@@ -114,30 +114,30 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         disp.roundVals(2)
         self.sub_window.show()
         self.sub_ui.textEdit.setText(disp.toMarkdown())
-        self.save_configs()
+        self.saveConfigs()
 
 
 class DispOutput:
     def __init__(self, X):
         self.X: np.ndarray = X
 
-        self.l: int = np.shape(X)[0]  # Чмсло вариантов
-        self.n: int = np.shape(X)[1]  # Число наблюдений
-        self.N: int = np.size(X)  # Общее число наблюдений
-        self.V = np.sum(X, axis=1)  # Суммы
+        self.l: int = np.shape(X)[0]  # Число варіантів
+        self.n: int = np.shape(X)[1]  # Число спостережень
+        self.N: int = np.size(X)  # Загальна кількість спостережень
+        self.V: np.ndarray = np.sum(X, axis=1)  # Суми
         self.avg: float = np.average(X)
 
         self.C: float = pow(np.sum(X), 2) / self.N
         self.CY: float = np.sum(np.square(X)) - self.C
         self.CV: float = np.sum(np.square(self.V)) / self.n - self.C
         self.CZ: float = self.CY - self.CV
-        self.s2v: float = self.CV / (self.l - 1)  # средний квадрат вариантов
-        self.s2: float = self.CZ / (self.N - self.l)  # средний кадрат ошибки
-        self.v: float = 100 * math.sqrt(self.s2) / self.avg  # коэффициент вариации, %
+        self.s2v: float = self.CV / (self.l - 1)  # Середній квадрат варіантів
+        self.s2: float = self.CZ / (self.N - self.l)  # Середній квадрат помилки
+        self.v: float = 100 * math.sqrt(self.s2) / self.avg  # Коефіцієнт варіації, %
 
-        self.sx: float = math.sqrt(self.s2 / self.n)  # ошибка оптыта
-        self.sd: float = math.sqrt(2 * self.s2 / self.n)  # ошибка разности средних
-        self.sd_percent: float = 100 * self.sd / self.avg  # относительная ошибка разницы средних
+        self.sx: float = math.sqrt(self.s2 / self.n)  # Помилка досліду
+        self.sd: float = math.sqrt(2 * self.s2 / self.n)  # Помилка різниці середніх
+        self.sd_percent: float = 100 * self.sd / self.avg  # Відносна помилка різниці середніх
 
         self.Ff: float = self.s2v / self.s2
         self.F05: float = ft.f05_distr(self.n, self.N - self.l)
@@ -147,6 +147,7 @@ class DispOutput:
         self.HCP05_percent: float = (self.HCP05 * 100) / self.avg
 
     def roundVals(self, n):
+        self.avg = round(self.avg, n)
         self.CY = round(self.CY, n)
         self.CV = round(self.CV, n)
         self.CZ = round(self.CZ, n)
@@ -216,7 +217,7 @@ class DispOutput:
         columns = ['Варіанти']
         for i in range(0, self.n):
             columns.append(str(i + 1))
-        columns.append('К-ть\nспост.')
+        columns.append('К-ть спост.')
         columns.append('Суми')
         columns.append('Середні')
         body = []
@@ -229,23 +230,27 @@ class DispOutput:
             body.append(row)
         table_01 = pd.DataFrame(body, columns=columns)
 
-        head = ['Дисперсія', 'Сума\nквадратів', 'Ступені\nсвободи', 'Середній\nквадрат', 'Fф', 'F05']
+        head = ['Дисперсія', 'Сума квадратів', 'Ступені свободи', 'Середній квадрат', 'Fф', 'F05']
         body = [['Загальна', self.CY, self.N - 1, '--', '--', '--'],
                 ['Варіантів', self.CV, self.l - 1, self.s2v, self.Ff, self.F05],
                 ['Залишок (помилки)', self.CZ, self.N - self.l, self.s2, '--', '--']]
         table_02 = pd.DataFrame(body, columns=head)
 
         writer = pd.ExcelWriter("result.xlsx", engine='xlsxwriter')
-        table_01.to_excel(writer, sheet_name='Sheet1', index=False, startrow=0)
-        table_02.to_excel(writer, sheet_name='Sheet1', index=False, startrow=self.n + 5)
+        table_01.to_excel(writer, index=False, startrow=0)
+        table_02.to_excel(writer, index=False, startrow=self.l + 4)
 
         workbook = writer.book
         worksheet = writer.sheets['Sheet1']
 
-        format_cells = workbook.add_format({'align': 'center', 'valign': 'vcenter', 'font_size': 10})
-        format_right = workbook.add_format({'align': 'right', 'valign': 'vcenter', 'font_size': 10})
+        format_cells = workbook.add_format({'align': 'center', 'valign': 'vcenter', 'font_size': 10, 'text_wrap': True})
+        format_right = workbook.add_format({'align': 'right', 'valign': 'vcenter', 'font_size': 10, 'text_wrap': True})
+        format_header = workbook.add_format({'align': 'center', 'valign': 'vcenter', 'font_size': 10, 'text_wrap': True})
+
         worksheet.set_column(0, 0, 18, format_cells)
         worksheet.set_column(2, 99, None, format_cells)
+        worksheet.set_row(0, 30, format_header)
+        worksheet.set_row(self.l + 4, 30, format_header)
 
         worksheet.merge_range(self.l + 1, 0, self.l + 1, self.n, 'Загальна сума', format_right)
         worksheet.write(self.l + 1, self.n + 1, self.N, format_cells)
