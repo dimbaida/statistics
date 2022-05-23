@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def get_closest_index(num: int, l: list):
+def getClosestIndex(num: int, l: list):
     diff = 9999
     index = -1
     for v in l:
@@ -51,8 +51,8 @@ def f05_distr(col, row):
     rows = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
             21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 40, 60, 120, 99999999999]
     cols = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 15, 20, 24, 30, 40, 60, 120, 99999999999]
-    row_i = get_closest_index(row, rows)
-    col_i = get_closest_index(col, cols)
+    row_i = getClosestIndex(row, rows)
+    col_i = getClosestIndex(col, cols)
     return table[row_i, col_i]
 
 
@@ -117,7 +117,7 @@ def t_crit(col, row):
             21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50,
             55, 60, 65, 70, 80, 90, 100, 120, 150, 200, 250, 300, 400, 500]
     cols = [0.80, 0.90, 0.95, 0.98, 0.99, 0.995, 0.998, 0.999]
-    row_i = get_closest_index(row, rows)
-    col_i = get_closest_index(col, cols)
+    row_i = getClosestIndex(row, rows)
+    col_i = getClosestIndex(col, cols)
     return table[row_i, col_i]
 
